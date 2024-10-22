@@ -8,7 +8,7 @@ except:
 from .constants import DEFAULT_BUFFER_SIZE
 from .log import logmsg, logerr
 
-class PumpkinMapping(object):
+class LoadBalancerMapping(object):
     '''
         Represents a mapping of a local listen to a series of workers
     '''
@@ -22,7 +22,7 @@ class PumpkinMapping(object):
         return [self.localAddr, self.localPort, self.workers]
 
     def addWorker(self, workerAddr, workerPort):
-        self.workers.append( {'port' : int(workerPort), 'addr' : workerAddr} )
+        self.workers.append({'port': int(workerPort), 'addr': workerAddr})
 
     def removeWorker(self, workerAddr, workerPort):
         newWorkers = []
@@ -37,9 +37,9 @@ class PumpkinMapping(object):
 
         return removedWorker
 
-class PumpkinConfig(ConfigParser):
+class LoadBalancerConfig(ConfigParser):
     '''
-        The class for managing Pumpkin's Config File
+        The class for managing LoadBalancer's Config File
     '''
 
     
@@ -48,8 +48,8 @@ class PumpkinConfig(ConfigParser):
         self.configFilename = configFilename
 
         self._options = {
-            'pre_resolve_workers' : True,
-            'buffer_size'         : DEFAULT_BUFFER_SIZE,
+            'pre_resolve_workers': True,
+            'buffer_size': DEFAULT_BUFFER_SIZE,
         }
         self._mappings = {}
 
@@ -60,7 +60,7 @@ class PumpkinConfig(ConfigParser):
         try:
             f = open(self.configFilename, 'rt')
         except IOError as e:
-            logerr('Could not open config file: "%s": %s\n' %(self.configFilename, str(e)))
+            logerr('Could not open config file: "%s": %s\n' % (self.configFilename, str(e)))
             raise e
         [self.remove_section(s) for s in self.sections()]
         self.readfp(f)
@@ -100,7 +100,7 @@ class PumpkinConfig(ConfigParser):
             elif preResolveWorkers == '0' or preResolveWorkers.lower() == 'false':
                 self._options['pre_resolve_workers'] = False
             else:
-                logerr('WARNING: Unknown value for [options] -> pre_resolve_workers "%s" -- ignoring value, retaining previous "%s"\n' %(str(preResolveWorkers), str(self._options['pre_resolve_workers'])) )
+                logerr('WARNING: Unknown value for [options] -> pre_resolve_workers "%s" -- ignoring value, retaining previous "%s"\n' % (str(preResolveWorkers), str(self._options['pre_resolve_workers'])))
         except:
             pass
 
@@ -109,14 +109,14 @@ class PumpkinConfig(ConfigParser):
             if bufferSize.isdigit() and int(bufferSize) > 0:
                 self._options['buffer_size'] = int(bufferSize)
             else:
-                logerr('WARNING: buffer_size must be an integer > 0 (bytes). Got "%s" -- ignoring value, retaining previous "%s"\n' %(bufferSize, str(self._options['buffer_size'])) )
+                logerr('WARNING: buffer_size must be an integer > 0 (bytes). Got "%s" -- ignoring value, retaining previous "%s"\n' % (bufferSize, str(self._options['buffer_size'])))
         except Exception as e:
-            logerr('Error parsing [options]->buffer_size : %s. Retaining default, %s\n' %(str(e),str(DEFAULT_BUFFER_SIZE)) )
+            logerr('Error parsing [options]->buffer_size : %s. Retaining default, %s\n' % (str(e), str(DEFAULT_BUFFER_SIZE)))
 
     def _processMappings(self):
 
         if 'mappings' not in self._sections:
-            raise PumpkinConfigException('ERROR: Config is missing required "mappings" section.\n')
+            raise LoadBalancerConfigException('ERROR: Config is missing required "mappings" section.\n')
 
         preResolveWorkers = self._options['pre_resolve_workers']
 
@@ -127,50 +127,50 @@ class PumpkinConfig(ConfigParser):
             addrPortSplit = addrPort.split(':')
             addrPortSplitLen = len(addrPortSplit)
             if not workers:
-                logerr('WARNING: Skipping, no workers defined for %s\n' %(addrPort,))
+                logerr('WARNING: Skipping, no workers defined for %s\n' % (addrPort,))
                 continue
             if addrPortSplitLen == 1:
                 (localAddr, localPort) = ('0.0.0.0', addrPort)
             elif addrPortSplitLen == 2:
                 (localAddr, localPort) = addrPortSplit
             else:
-                logerr('WARNING: Skipping Invalid mapping: %s=%s\n' %(addrPort, workers))
+                logerr('WARNING: Skipping Invalid mapping: %s=%s\n' % (addrPort, workers))
                 continue
             try:
                 localPort = int(localPort)
             except ValueError:
-                logerr('WARNING: Skipping Invalid mapping, cannot convert port: %s\n' %(addrPort,))
+                logerr('WARNING: Skipping Invalid mapping, cannot convert port: %s\n' % (addrPort,))
                 continue
 
             workerLst = []
             for worker in workers.split(','):
                 workerSplit = worker.split(':')
                 if len(workerSplit) != 2 or len(workerSplit[0]) < 3 or len(workerSplit[1]) == 0:
-                    logerr('WARNING: Skipping Invalid Worker %s\n' %(worker,))
+                    logerr('WARNING: Skipping Invalid Worker %s\n' % (worker,))
 
                 if preResolveWorkers is True:
                     try:
                         addr = socket.gethostbyname(workerSplit[0])
                     except:
-                        logerr('WARNING: Skipping Worker, could not resolve %s\n' %(workerSplit[0],))
+                        logerr('WARNING: Skipping Worker, could not resolve %s\n' % (workerSplit[0],))
                 else:
                     addr = workerSplit[0]
                 try:
                     port = int(workerSplit[1])
                 except ValueError:
-                    logerr('WARNING: Skipping worker, could not parse port %s\n' %(workerSplit[1],))
+                    logerr('WARNING: Skipping worker, could not parse port %s\n' % (workerSplit[1],))
 
-                workerLst.append({'addr' : addr, 'port' : port})
+                workerLst.append({'addr': addr, 'port': port})
 
-            keyName = "%s:%s" %(localAddr, addrPort)
+            keyName = "%s:%s" % (localAddr, addrPort)
             if keyName in mappings:
-                logerr('WARNING: Overriding existing mapping of %s with %s\n' %(addrPort, str(workerLst)))
-            mappings[addrPort] = PumpkinMapping(localAddr, localPort, workerLst)
+                logerr('WARNING: Overriding existing mapping of %s with %s\n' % (addrPort, str(workerLst)))
+            mappings[addrPort] = LoadBalancerMapping(localAddr, localPort, workerLst)
 
         self._mappings = mappings
 
 
-class PumpkinConfigException(Exception):
+class LoadBalancerConfigException(Exception):
     pass
 
 # vim: ts=4 sw=4 expandtab

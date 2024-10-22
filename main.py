@@ -9,17 +9,14 @@ import threading
 import traceback
 import time
 
-from pumpkinlb import __version__ as pumpkin_version
+from loadBalancer import __version__ as loadBalancer_version
 
-from pumpkinlb.config import PumpkinConfig, PumpkinMapping, PumpkinConfigException
-from pumpkinlb.usage import printUsage, printConfigHelp, getVersionStr
-from pumpkinlb.listener import PumpkinListener
-from pumpkinlb.constants import GRACEFUL_SHUTDOWN_TIME
+from loadBalancer.config import LoadBalancerConfig, LoadBalancerMapping, LoadBalancerConfigException
+from loadBalancer.usage import printUsage, printConfigHelp, getVersionStr
+from loadBalancer.listener import LoadBalancerListener
+from loadBalancer.constants import GRACEFUL_SHUTDOWN_TIME
 
-from pumpkinlb.log import logmsg, logerr
-
-
-
+from loadBalancer.log import logmsg, logerr
 
 if __name__ == '__main__':
 
@@ -46,10 +43,10 @@ if __name__ == '__main__':
         printUsage(sys.stderr)
         sys.exit(1)
 
-    pumpkinConfig = PumpkinConfig(configFilename)
+    loadBalancerConfig = LoadBalancerConfig(configFilename)
     try:
-        pumpkinConfig.parse()
-    except PumpkinConfigException as configError:
+        loadBalancerConfig.parse()
+    except LoadBalancerConfigException as configError:
         sys.stderr.write(str(configError) + '\n\n\n')
         printConfigHelp()
         sys.exit(1)
@@ -58,17 +55,16 @@ if __name__ == '__main__':
         printConfigHelp(sys.stderr)
         sys.exit(1)
 
-    bufferSize = pumpkinConfig.getOptionValue('buffer_size')
-    logmsg('Configured buffer size = %d bytes\n' %(bufferSize,))
+    bufferSize = loadBalancerConfig.getOptionValue('buffer_size')
+    logmsg('Configured buffer size = %d bytes\n' % (bufferSize,))
 
-    mappings = pumpkinConfig.getMappings()
+    mappings = loadBalancerConfig.getMappings()
     listeners = []
     for mappingAddr, mapping in mappings.items():
-        logmsg('Starting up listener on %s:%d with mappings: %s\n' %(mapping.localAddr, mapping.localPort, str(mapping.workers)))
-        listener = PumpkinListener(mapping.localAddr, mapping.localPort, mapping.workers, bufferSize)
+        logmsg('Starting up listener on %s:%d with mappings: %s\n' % (mapping.localAddr, mapping.localPort, str(mapping.workers)))
+        listener = LoadBalancerListener(mapping.localAddr, mapping.localPort, mapping.workers, bufferSize)
         listener.start()
         listeners.append(listener)
-
 
     globalIsTerminating = False
 
@@ -77,7 +73,7 @@ if __name__ == '__main__':
         global globalIsTerminating
 #        sys.stderr.write('CALLED\n')
         if globalIsTerminating is True:
-            return # Already terminating
+            return  # Already terminating
         globalIsTerminating = True
         logerr('Caught signal, shutting down listeners...\n')
         for listener in listeners:
@@ -91,12 +87,12 @@ if __name__ == '__main__':
         remainingListeners = listeners
         remainingListeners2 = []
         for listener in remainingListeners:
-            logerr('Waiting on %d...\n' %(listener.pid,))
+            logerr('Waiting on %d...\n' % (listener.pid,))
             listener.join(.05)
             if listener.is_alive() is True:
                 remainingListeners2.append(listener)
         remainingListeners = remainingListeners2
-        logerr('Remaining (%d) listeners are: %s\n' %(len(remainingListeners), [listener.pid for listener in remainingListeners]))
+        logerr('Remaining (%d) listeners are: %s\n' % (len(remainingListeners), [listener.pid for listener in remainingListeners]))
 
         afterJoinTime = time.time()
 
@@ -107,7 +103,7 @@ if __name__ == '__main__':
                 anyAlive = False
                 # If we still have time left, see if we are just done or if there are children to clean up using remaining time allotment
                 if threading.activeCount() > 1 or len(multiprocessing.active_children()) > 0:
-                    logerr('Listener closed in %1.2f seconds. Waiting up to %d seconds before terminating.\n' %(delta, remainingSleep))
+                    logerr('Listener closed in %1.2f seconds. Waiting up to %d seconds before terminating.\n' % (delta, remainingSleep))
                     thisThread = threading.current_thread()
                     for i in range(remainingSleep):
                         allThreads = threading.enumerate()
@@ -131,11 +127,11 @@ if __name__ == '__main__':
                 if anyAlive is True:
                     logerr('Could not kill in time.\n')
                 else:
-                    logerr('Shutdown successful after %1.2f seconds.\n' %( time.time() - startTime))
+                    logerr('Shutdown successful after %1.2f seconds.\n' % (time.time() - startTime))
 
             else:
                 logerr('Listener timed out in closing, exiting uncleanly.\n')
-                time.sleep(.05) # Why not? :P
+                time.sleep(.05)  # Why not? :P
 
         logmsg('exiting...\n')
         signal.signal(signal.SIGTERM, signal.SIG_DFL)
@@ -143,8 +139,8 @@ if __name__ == '__main__':
         sys.exit(0)
         os.kill(os.getpid(), signal.SIGTERM)
         return 0
-    # END handleSigTerm
 
+    # END handleSigTerm
 
     signal.signal(signal.SIGTERM, handleSigTerm)
     signal.signal(signal.SIGINT, handleSigTerm)

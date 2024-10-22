@@ -8,7 +8,7 @@ import time
 from .constants import GRACEFUL_SHUTDOWN_TIME, DEFAULT_BUFFER_SIZE
 from .log import logmsg, logerr
 
-class PumpkinWorker(multiprocessing.Process):
+class LoadBalancerWorker(multiprocessing.Process):
     '''
         A class which handles the worker-side of processing a request (communicating between the back-end worker and the requesting client)
     '''
@@ -25,7 +25,6 @@ class PumpkinWorker(multiprocessing.Process):
         self.workerSocket = None
 
         self.bufferSize = bufferSize
-
 
         self.failedToConnect = multiprocessing.Value('i', 0)
 
@@ -59,11 +58,11 @@ class PumpkinWorker(multiprocessing.Process):
         bufferSize = self.bufferSize
 
         try:
-            workerSocket.connect( (self.workerAddr, self.workerPort) )
+            workerSocket.connect((self.workerAddr, self.workerPort))
         except:
-            logerr('Could not connect to worker %s:%d\n' %(self.workerAddr, self.workerPort))
+            logerr('Could not connect to worker %s:%d\n' % (self.workerAddr, self.workerPort))
             self.failedToConnect.value = 1
-            time.sleep(GRACEFUL_SHUTDOWN_TIME) # Give a few seconds for the "fail" reader to pick this guy up before we are removed by the joining thread
+            time.sleep(GRACEFUL_SHUTDOWN_TIME)  # Give a few seconds for the "fail" reader to pick this guy up before we are removed by the joining thread
             return
 
         signal.signal(signal.SIGTERM, self.closeConnectionsAndExit)
@@ -78,10 +77,9 @@ class PumpkinWorker(multiprocessing.Process):
                     waitingToWrite.append(clientSocket)
                 if dataFromClient:
                     waitingToWrite.append(workerSocket)
-                
 
                 try:
-                    (hasDataForRead, readyForWrite, hasError) = select.select( [clientSocket, workerSocket], waitingToWrite, [clientSocket, workerSocket], .3)
+                    (hasDataForRead, readyForWrite, hasError) = select.select([clientSocket, workerSocket], waitingToWrite, [clientSocket, workerSocket], .3)
                 except KeyboardInterrupt:
                     break
 
@@ -111,7 +109,6 @@ class PumpkinWorker(multiprocessing.Process):
                         dataToClient = dataToClient[bufferSize:]
 
         except Exception as e:
-            logerr('Error on %s:%d: %s\n' %(self.workerAddr, self.workerPort, str(e)))
+            logerr('Error on %s:%d: %s\n' % (self.workerAddr, self.workerPort, str(e)))
 
         self.closeConnectionsAndExit()
-

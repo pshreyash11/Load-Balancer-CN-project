@@ -1,13 +1,13 @@
 import os
 import sys
 
-from . import __version__ as pumpkinlb_version
+from . import __version__ as loadBalancer_version
 
 from .constants import DEFAULT_BUFFER_SIZE
 
 def printUsage(toStream=sys.stdout):
     toStream.write('''Usage: %s [config file]
-Starts Pumpkin Load Balancer using the given config file.
+Starts Load Balancer using the given config file.
 
   Arguments:
 
@@ -20,10 +20,9 @@ Starts Pumpkin Load Balancer using the given config file.
     SIGTERM                        Performs a graceful shutdown
 
 %s
-''' %(os.path.basename(sys.argv[0]), getVersionStr())
+''' % (os.path.basename(sys.argv[0]), getVersionStr())
     )
 #    SIGUSR1                        Re-read the config, and alter service to match TODO: NOT DONE
-
 
 
 def printConfigHelp(toStream=sys.stdout):
@@ -45,13 +44,11 @@ Config file is broken up into sections, definable by [$SectionName], followed by
         or
       inport=worker1:port,worker2:port...                        Listen on all interfaces on port "inport", and farm out to worker addresses with given ports. Ex: 80=10.10.0.1:5900,10.10.0.2:5900
 
-''' %(DEFAULT_BUFFER_SIZE, )
+''' % (DEFAULT_BUFFER_SIZE,)
     )
 
 
 def getVersionStr():
-    return 'PumpkinLB Version %s (c) 2014-2015 Timothy Savannah GPLv3' %(pumpkinlb_version,)
+    return 'LoadBalancer Version %s (c) 2014-2015 Timothy Savannah GPLv3' % (loadBalancer_version,)
 
 # vim : ts=4 sw=4 expandtab
-
-
