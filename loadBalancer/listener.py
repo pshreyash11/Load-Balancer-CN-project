@@ -25,10 +25,16 @@ class LoadBalancerListener(multiprocessing.Process):
         self.workers = workers
         self.bufferSize = bufferSize
 
-        self.activeWorkers = []   # Workers currently processing a job
-        self.listenSocket = None  # Socket for incoming connections
-        self.cleanupThread = None # Cleans up completed workers
-        self.keepGoing = True     # Flips to False when the application is set to terminate
+        # Additional fields for weighted round robin
+        self.weights = [worker['weight'] for worker in self.workers]
+        self.total_weight = sum(self.weights)
+        self.cumulative_weights = [sum(self.weights[:i+1]) for i in range(len(self.weights))]
+        self.current_index = -1
+
+        self.activeWorkers = []
+        self.listenSocket = None
+        self.cleanupThread = None
+        self.keepGoing = True
 
     def cleanup(self):
         time.sleep(2)  # Wait for things to kick off
@@ -153,8 +159,10 @@ class LoadBalancerListener(multiprocessing.Process):
         # Select algorithm based on config
         if selected_algorithm == 'random':
             load_balancer_algorithm = self.random_algorithm
-        else:
+        elif selected_algorithm == 'round_robin':
             load_balancer_algorithm = self.round_robin
+        elif selected_algorithm == 'weighted_round_robin':  # Add support for weighted round robin
+            load_balancer_algorithm = self.weighted_round_robin
 
         try:
             while self.keepGoing is True:
@@ -166,6 +174,29 @@ class LoadBalancerListener(multiprocessing.Process):
             return
 
         self.closeWorkers()
+
+
+    def weighted_round_robin(self):
+        try:
+            (clientConnection, clientAddr) = self.listenSocket.accept()
+        except Exception as e:
+            logerr(f'Cannot bind to {self.localAddr}:{self.localPort}. Error: {e}\n')
+            if self.keepGoing is True:
+                time.sleep(3)
+            return
+
+        workerInfo = self.get_weighted_worker()  # Get weighted worker
+        worker = LoadBalancerWorker(clientConnection, clientAddr, workerInfo['addr'], workerInfo['port'], self.bufferSize)
+        self.activeWorkers.append(worker)
+        worker.start()
+
+        
+    def get_weighted_worker(self):
+        """Selects the next worker based on weights."""
+        self.current_index = (self.current_index + 1) % self.total_weight
+        for index, weight in enumerate(self.cumulative_weights):
+            if self.current_index < weight:
+                return self.workers[index]
 
     # Random selection algorithm
     def random_algorithm(self):

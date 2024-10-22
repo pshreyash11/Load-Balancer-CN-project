@@ -94,17 +94,6 @@ class LoadBalancerConfig(ConfigParser):
             return
 
         try:
-            preResolveWorkers = self.get('options', 'pre_resolve_workers')
-            if preResolveWorkers == '1' or preResolveWorkers.lower() == 'true':
-                self._options['pre_resolve_workers'] = True
-            elif preResolveWorkers == '0' or preResolveWorkers.lower() == 'false':
-                self._options['pre_resolve_workers'] = False
-            else:
-                logerr('WARNING: Unknown value for [options] -> pre_resolve_workers "%s" -- ignoring value, retaining previous "%s"\n' % (str(preResolveWorkers), str(self._options['pre_resolve_workers'])))
-        except:
-            pass
-
-        try:
             bufferSize = self.get('options', 'buffer_size')
             if bufferSize.isdigit() and int(bufferSize) > 0:
                 self._options['buffer_size'] = int(bufferSize)
@@ -115,7 +104,7 @@ class LoadBalancerConfig(ConfigParser):
 
         try:
             algorithm = self.get('options', 'algorithm')
-            if algorithm in ['random', 'round_robin']:
+            if algorithm in ['random', 'round_robin', 'weighted_round_robin']:  # Include 'weighted_round_robin'
                 self._options['algorithm'] = algorithm
             else:
                 logerr(f'WARNING: Unknown algorithm "{algorithm}". Defaulting to "random".\n')
@@ -123,8 +112,9 @@ class LoadBalancerConfig(ConfigParser):
         except:
             self._options['algorithm'] = 'random'  # Default if option is missing
 
-    def _processMappings(self):
 
+
+    def _processMappings(self):
         if 'mappings' not in self._sections:
             raise LoadBalancerConfigException('ERROR: Config is missing required "mappings" section.\n')
 
@@ -155,7 +145,7 @@ class LoadBalancerConfig(ConfigParser):
             workerLst = []
             for worker in workers.split(','):
                 workerSplit = worker.split(':')
-                if len(workerSplit) != 2 or len(workerSplit[0]) < 3 or len(workerSplit[1]) == 0:
+                if len(workerSplit) < 2:
                     logerr('WARNING: Skipping Invalid Worker %s\n' % (worker,))
 
                 if preResolveWorkers is True:
@@ -165,12 +155,16 @@ class LoadBalancerConfig(ConfigParser):
                         logerr('WARNING: Skipping Worker, could not resolve %s\n' % (workerSplit[0],))
                 else:
                     addr = workerSplit[0]
+
                 try:
                     port = int(workerSplit[1])
                 except ValueError:
                     logerr('WARNING: Skipping worker, could not parse port %s\n' % (workerSplit[1],))
 
-                workerLst.append({'addr': addr, 'port': port})
+                # If weight is not specified, default to 1
+                weight = int(workerSplit[2]) if len(workerSplit) > 2 else 1
+
+                workerLst.append({'addr': addr, 'port': port, 'weight': weight})
 
             keyName = "%s:%s" % (localAddr, addrPort)
             if keyName in mappings:
@@ -178,6 +172,8 @@ class LoadBalancerConfig(ConfigParser):
             mappings[addrPort] = LoadBalancerMapping(localAddr, localPort, workerLst)
 
         self._mappings = mappings
+
+
 
 
 class LoadBalancerConfigException(Exception):
