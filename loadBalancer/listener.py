@@ -158,26 +158,45 @@ class LoadBalancerListener(multiprocessing.Process):
         # Create thread that will retry failed tasks
         retryThread = threading.Thread(target=self.retryFailedWorkers)
         retryThread.start()
+        def random_algorithm():
+            try:
+                (clientConnection, clientAddr) = listenSocket.accept()
+            except:
+                logerr('Cannot bind to %s:%s\n' % (self.localAddr, self.localPort))
+                if self.keepGoing is True:
+                    time.sleep(3)
+
+                raise
+            workerInfo = random.choice(self.workers)
+
+            worker = LoadBalancerWorker(clientConnection, clientAddr, workerInfo['addr'], workerInfo['port'], self.bufferSize)
+            self.activeWorkers.append(worker)
+            worker.start()
+
+        
+        def round_robin():
+            for workerInfo in self.workers:
+                if self.keepGoing is False:
+                    break
+                try:
+                    (clientConnection, clientAddr) = listenSocket.accept()
+                except:
+                    logerr('Cannot bind to %s:%s\n' % (self.localAddr, self.localPort))
+                    if self.keepGoing is True:
+                        time.sleep(3)
+                        continue
+
+                    raise  
+
+                worker = LoadBalancerWorker(clientConnection, clientAddr, workerInfo['addr'], workerInfo['port'], self.bufferSize)
+                self.activeWorkers.append(worker)
+                worker.start()
+        
 
         try:
             while self.keepGoing is True:
-                for workerInfo in self.workers:
-                    if self.keepGoing is False:
-                        break
-                    try:
-                        (clientConnection, clientAddr) = listenSocket.accept()
-                    except:
-                        logerr('Cannot bind to %s:%s\n' % (self.localAddr, self.localPort))
-                        if self.keepGoing is True:
-                            # Exception did not come from termination process, so keep rolling'
-                            time.sleep(3)
-                            continue
+                random_algorithm()
 
-                        raise  # Termination DID come from termination process, so abort.
-
-                    worker = LoadBalancerWorker(clientConnection, clientAddr, workerInfo['addr'], workerInfo['port'], self.bufferSize)
-                    self.activeWorkers.append(worker)
-                    worker.start()
         except Exception as e:
             logerr('Got exception: %s, shutting down workers on %s:%d\n' % (str(e), self.localAddr, self.localPort))
             self.closeWorkers()
