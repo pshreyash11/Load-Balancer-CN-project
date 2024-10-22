@@ -113,6 +113,16 @@ class LoadBalancerConfig(ConfigParser):
         except Exception as e:
             logerr('Error parsing [options]->buffer_size : %s. Retaining default, %s\n' % (str(e), str(DEFAULT_BUFFER_SIZE)))
 
+        try:
+            algorithm = self.get('options', 'algorithm')
+            if algorithm in ['random', 'round_robin']:
+                self._options['algorithm'] = algorithm
+            else:
+                logerr(f'WARNING: Unknown algorithm "{algorithm}". Defaulting to "random".\n')
+                self._options['algorithm'] = 'random'  # Default to random if invalid
+        except:
+            self._options['algorithm'] = 'random'  # Default if option is missing
+
     def _processMappings(self):
 
         if 'mappings' not in self._sections:
