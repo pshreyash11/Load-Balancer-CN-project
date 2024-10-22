@@ -1,7 +1,7 @@
 import sys
 import socket
 try:
-    from ConfigParser import ConfigParser
+    from configparser import ConfigParser
 except:
     from configparser import ConfigParser
 
@@ -63,7 +63,7 @@ class LoadBalancerConfig(ConfigParser):
             logerr('Could not open config file: "%s": %s\n' % (self.configFilename, str(e)))
             raise e
         [self.remove_section(s) for s in self.sections()]
-        self.readfp(f)
+        self.read_file(f)
         f.close()
 
         self._processOptions()
