@@ -53,6 +53,7 @@ class LoadBalancerWorker(multiprocessing.Process):
 
     def run(self):
         workerSocket = self.workerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        workerSocket.bind(("127.0.0.1", 24003))
         clientSocket = self.clientSocket
 
         bufferSize = self.bufferSize
