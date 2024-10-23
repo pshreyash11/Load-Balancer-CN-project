@@ -132,7 +132,7 @@ class LoadBalancerListener(multiprocessing.Process):
         signal.signal(signal.SIGTERM, self.closeWorkers)
 
         # Algorithm selection from config
-        config = LoadBalancerConfig('example.cfg')
+        config = LoadBalancerConfig('setup.cfg')
         config.parse()
         selected_algorithm = config.getOptionValue('algorithm')
 
