@@ -14,9 +14,9 @@ Welcome to the **Load Balancer** project! This project is a multi-process TCP lo
 ---
 
 ## 📜 Table of Contents
-- [Installation](#installation)
-- [Usage](#usage)
-- [Load Balancing Algorithms](#load-balancing-algorithms)
+- [Installation]
+- [Usage]
+- [Load Balancing Algorithms]
 
 ---
 
@@ -25,17 +25,17 @@ Welcome to the **Load Balancer** project! This project is a multi-process TCP lo
 First, clone this repository:
 
 ```bash
-git clone https://github.com/yourusername/load-balancer.git
-cd load-balancer
+git clone https://github.com/pshreyash11/Load-Balancer-CN-project.git
+cd Load-balancer-CN-Project
 ```
 
 ## 🔧 Usage
 
-1) Setup example.cfg file as per your needs
+1) Setup setup.cfg file as per your needs
 select sutaible algorithm and ports
 
 ```bash
-python main.py example.cfg
+python main.py setup.cfg
 ```
 2) now open new terminals and initiate servers
 
@@ -60,4 +60,19 @@ e.g http://localhost:24003/main.py
    2) Random: Assigns each incoming request to a random worker.
    3) Weighted Round Robin: Distributes requests based on worker weights, favoring more capable servers.
 
+## 🤝 Contributors
+
+Thanks to the following people for their contributions:
+
+<a href="https://github.com/pshreyash11">
+  <img src="https://avatars.githubusercontent.com/pshreyash11" alt="pshreyash11" width="50" height="50" style="border-radius: 50%;">
+</a>
+
+<a href="https://github.com/sahilpatil1804">
+  <img src="https://avatars.githubusercontent.com/sahilpatil1804" alt="sahilpatil1804" width="50" height="50" style="border-radius: 50%;">
+</a>
+
+<a href="https://github.com/aapatil2004">
+  <img src="https://avatars.githubusercontent.com/aapatil2004" alt="aapatil2004" width="50" height="50" style="border-radius: 50%;">
+</a>
 
