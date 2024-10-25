@@ -31,23 +31,23 @@ cd Load-balancer-CN-Project
 
 ## 🔧 Usage
 
-1) Setup setup.cfg file as per your needs
+
+1) now open new terminals and initiate servers
+
+```bash
+python runserver.py
+```
+
+this will open 4-5 terminals initiating different servers.
+
+
+2) Setup setup.cfg file as per your needs
 select sutaible algorithm and ports
 
 ```bash
 python main.py setup.cfg
 ```
-2) now open new terminals and initiate servers
 
-```bash
-python -m http.server 8080
-python -m http.server 8081
-python -m http.server 8082
-python -m http.server 8083
-python -m http.server 8084
-```
-
-add each command in new terminal
 
 3) Open postman and send GET request to routes to test the code
 e.g http://localhost:24003/main.py
