@@ -3,6 +3,16 @@
 
 Welcome to the **Load Balancer** project! This project is a multi-process TCP load balancer implemented in Python, supporting various algorithms such as **Round Robin**, **Random**, and **Weighted Round Robin**. It's designed to efficiently balance requests between multiple workers and can be configured through a simple configuration file.
 
+
+## 📜 Table of Contents
+- **Key Features**
+- **Installation**
+- **Usage**
+- **Load Balancing Algorithms**
+- **Contributors**
+
+---
+
 ### 🎨 Key Features
 
 - ⚡ **Multi-process**: Optimized using Python’s `multiprocessing` for handling multiple requests.
@@ -10,15 +20,10 @@ Welcome to the **Load Balancer** project! This project is a multi-process TCP lo
 - 📂 **Configurable**: Modify the behavior easily through an external configuration file.
 - 🛠️ **Worker Management**: Dynamically manage workers based on their performance.
 - 💾 **Efficient**: Uses buffered I/O for optimized socket communication.
+- 🔧 **Proxy Management**: You can't directly send request to backend servers.
 
 ---
 
-## 📜 Table of Contents
-- [Installation]
-- [Usage]
-- [Load Balancing Algorithms]
-
----
 
 ## 🔧 Installation
 
